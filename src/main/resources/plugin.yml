@@ -1,0 +1,12 @@
+name: Harumansun
+version: '1.0-SNAPSHOT'
+main: kr.sobin.Harumansun
+api-version: '1.20'
+load: STARTUP
+authors: [ Sobin ]
+commands:
+  harumansun:
+    description: Harumansun plugin command
+  player:
+    description: FakePlayer control command
+
