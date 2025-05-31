@@ -6,9 +6,13 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 
 object BlindessEvent {
-    fun blindOthers(except: Player, durationSeconds: Int = 60) {
-        val effect = PotionEffect(PotionEffectType.BLINDNESS, durationSeconds * 20, 1, false, false)
-        Bukkit.getOnlinePlayers().filter { it != except }.forEach { it.addPotionEffect(effect) }
+    fun blindOthers(player: Player) {
+        // 본인을 제외한 모든 온라인 플레이어에게 실명 효과 적용
+        Bukkit.getOnlinePlayers()
+            .filter { it != player }
+            .forEach { target ->
+                target.addPotionEffect(PotionEffect(PotionEffectType.BLINDNESS, 20 * 5, 1))
+            }
     }
 }
 

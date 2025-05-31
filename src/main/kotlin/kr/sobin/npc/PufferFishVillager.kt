@@ -1,73 +1,77 @@
 package kr.sobin.npc
 
-import net.milkbowl.vault.economy.Economy
+import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
-import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
+import dev.lone.itemsadder.api.FontImages.FontImageWrapper
+import kr.sobin.core.ShopCore
 
-class PufferFishVillager(private val plugin: JavaPlugin) : Listener {
+class PufferFishVillager {
     companion object {
-        const val SHOP_TITLE = "복어 상점"
-        const val SLOT_PUFFERFISH = 13
+        const val SLOT_PUFFERFISH = 22  // 더블 체스트의 중앙
+
+        fun createPufferFish(plugin: JavaPlugin): ItemStack {
+            val pufferfish = ItemStack(Material.PUFFERFISH)
+            val meta = pufferfish.itemMeta
+            val itemName = plugin.config.getString("복어 상점.아이템.이름") ?: "&e복어"
+            val itemDescription = plugin.config.getString("복어 상점.아이템.설명")
+                ?.replace("%price%", plugin.config.getString("복어 상점.가격") ?: "100")
+
+            meta?.setDisplayName(org.bukkit.ChatColor.translateAlternateColorCodes('&', itemName))
+            if (!itemDescription.isNullOrEmpty()) {
+                meta?.lore = listOf(org.bukkit.ChatColor.translateAlternateColorCodes('&', itemDescription))
+            }
+            pufferfish.itemMeta = meta
+            return pufferfish
+        }
 
         fun openPufferFishShop(player: Player, plugin: JavaPlugin) {
-            val inv = org.bukkit.Bukkit.createInventory(null, 27, SHOP_TITLE)
-            val item = org.bukkit.inventory.ItemStack(org.bukkit.Material.PUFFERFISH)
-            val meta = item.itemMeta
-            meta?.setDisplayName("§e복어")
-            val configPrice = plugin.config.getString("복어 상점.가격") ?: "100"
-            val price = configPrice.toDoubleOrNull() ?: 100.0
-            meta?.lore = listOf("§b현재 복어 시세: ${price.toInt()}원")
-            item.itemMeta = meta
-            inv.setItem(SLOT_PUFFERFISH, item)
+            val title = getShopTitle(plugin)
+            val inv: Inventory = Bukkit.createInventory(null, 54, title)
+
+            // config에서 배경 설정 확인
+            if (plugin.config.getBoolean("복어 상점.배경", true)) {
+                // 배경 유리판 설정
+                val purplePane = ShopCore.createPane(Material.PURPLE_STAINED_GLASS_PANE)
+                val yellowPane = ShopCore.createPane(Material.YELLOW_STAINED_GLASS_PANE)
+
+                // 더블 체스트에 맞게 장식 슬롯 위치 설정
+                val purpleSlots = listOf(
+                    0, 1, 2, 9, 10, 11, 18, 19, 20,  // 왼쪽 위
+                    6, 7, 8, 15, 16, 17, 24, 25, 26,  // 오른쪽 위
+                    27, 28, 29, 36, 37, 38, 45, 46, 47,  // 왼쪽 아래
+                    33, 34, 35, 42, 43, 44, 51, 52, 53   // 오른쪽 아래
+                )
+                val yellowSlots = listOf(
+                    3, 4, 5, 12, 14, 21, 22, 23,  // 위쪽
+                    30, 31, 32, 39, 41, 48, 49, 50  // 아래쪽
+                )
+
+                // 배경 설정
+                purpleSlots.forEach { slot -> inv.setItem(slot, purplePane) }
+                yellowSlots.forEach { slot -> inv.setItem(slot, yellowPane) }
+            }
+
+            // 복어 아이템 배치
+            inv.setItem(SLOT_PUFFERFISH, createPufferFish(plugin))
             player.openInventory(inv)
         }
-    }
-    private val shopTitle = SHOP_TITLE
-    private val slotpufferfish = SLOT_PUFFERFISH
 
-    private val economy: Economy? by lazy {
-        plugin.server.servicesManager.getRegistration(Economy::class.java)?.provider
-    }
+        fun getShopTitle(plugin: JavaPlugin): String {
+            val rawTitle = plugin.config.getString("복어 상점.제목") ?: "&e복어 상점"
+            return org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                FontImageWrapper.replaceFontImages(rawTitle))
+        }
 
-    @EventHandler
-    fun onInventoryClick(event: InventoryClickEvent) {
-        val player = event.whoClicked as? Player ?: return
-        val viewTitle = event.view.title
-        if (viewTitle != shopTitle) return
+        fun getNPCName(plugin: JavaPlugin): String {
+            return plugin.config.getString("복어 상점.이름") ?: "복어 상점"
+        }
 
-        // 클릭한 인벤토리가 상점 인벤토리(Top)인지 확인
-        val clickedInv = event.clickedInventory ?: return
-        if (clickedInv != event.view.topInventory) return
-
-        // 모든 클릭 막기 (기본)
-        event.isCancelled = true
-
-        // 복어 슬롯 클릭 시에만 구매 처리
-        if (event.slot == slotpufferfish && event.currentItem != null && event.currentItem?.type == org.bukkit.Material.PUFFERFISH) {
-            val configPrice = plugin.config.getString("복어 상점.가격") ?: "100"
-            val price = configPrice.toDoubleOrNull() ?: 100.0
-            val eco = economy
-            if (eco == null) {
-                player.sendMessage("[상점] 경제 시스템을 찾을 수 없습니다.")
-                return
-            }
-            if (eco.getBalance(player) < price) {
-                player.sendMessage("[상점] 돈이 부족합니다. (필요: ${price.toInt()}원)")
-                return
-            }
-            // 돈 차감 및 아이템 지급
-            eco.withdrawPlayer(player, price)
-            val pufferfish = org.bukkit.inventory.ItemStack(org.bukkit.Material.PUFFERFISH)
-            val meta = pufferfish.itemMeta
-            meta?.setDisplayName("§e복어")
-            meta?.lore = listOf("§b구매가: ${price.toInt()}원")
-            pufferfish.itemMeta = meta
-            player.inventory.addItem(pufferfish)
-            player.sendMessage("[상점] 복어를 ${price.toInt()}원에 구매했습니다!")
-            player.closeInventory()
+        fun playBuySound(player: Player, success: Boolean) {
+            ShopCore.playBuySound(player, success)
         }
     }
 }

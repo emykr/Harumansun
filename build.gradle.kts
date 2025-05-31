@@ -19,6 +19,7 @@ repositories {
     maven("https://nexus.hc.to/content/repositories/pub_releases/")
     maven("https://maven.minecraftforge.net/")
     maven("https://jitpack.io")
+    maven("https://maven.devs.beer")
 }
 
 dependencies {
@@ -35,6 +36,7 @@ dependencies {
     compileOnly("net.kyori:adventure-api:4.14.0")
     compileOnly("net.kyori:adventure-platform-bukkit:4.3.2")
     compileOnly("net.milkbowl.vault:VaultAPI:1.7")
+    compileOnly("dev.lone:api-itemsadder:4.0.10")
 
     compileOnly("net.minecraftforge:forge:1.20.1-47.1.0") // Mohist Forge 모드 연동 시
 }
