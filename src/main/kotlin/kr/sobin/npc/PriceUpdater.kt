@@ -3,6 +3,8 @@ package kr.sobin.npc
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitRunnable
 import kotlin.random.Random
+import java.io.File
+import org.bukkit.configuration.file.YamlConfiguration
 
 class PriceUpdater(private val plugin: JavaPlugin) {
     private var currentPrice = 100.0
@@ -33,11 +35,20 @@ class PriceUpdater(private val plugin: JavaPlugin) {
         // 최소 1원 보장
         if (currentPrice < 1) currentPrice = 1.0
 
-        // config에 저장
-        plugin.config.set("복어 상점.가격", currentPrice.toInt().toString())
-        plugin.saveConfig()
+        try {
+            // 기존 config 불러오기
+            val configFile = File(plugin.dataFolder, "config.yml")
+            val config = YamlConfiguration.loadConfiguration(configFile)
 
-        // 콘솔에 로그 출력
+            // 가격만 업데이트
+            config.set("복어 상점.가격", currentPrice.toInt().toString())
+
+            // 변경된 config 저장
+            config.save(configFile)
+
+            plugin.logger.info("[PriceUpdater] 복어 가격 업데이트: ${currentPrice.toInt()}원")
+        } catch (e: Exception) {
+            plugin.logger.severe("[PriceUpdater] 가격 업데이트 중 오류 발생: ${e.message}")
+        }
     }
 }
-

@@ -2,9 +2,10 @@ package kr.sobin
 
 import kr.sobin.command.HarumansunCommand
 import kr.sobin.command.PlayerCommand
-import kr.sobin.npc.InterrupterVillagerListener
+import kr.sobin.event.listener.InterruptItemListener
+import kr.sobin.event.listener.InterrupterVillagerListener
 import kr.sobin.npc.PriceUpdater
-import kr.sobin.npc.PufferFishVillagerListener
+import kr.sobin.event.listener.PufferFishVillagerListener
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
@@ -77,8 +78,8 @@ class Harumansun : JavaPlugin() {
             priceUpdater = PriceUpdater(this)
 
             // 이벤트 리스너 등록
-
             server.pluginManager.registerEvents(InterrupterVillagerListener(this), this)
+            server.pluginManager.registerEvents(InterruptItemListener(this), this)
             server.pluginManager.registerEvents(PufferFishVillagerListener(this), this)
 
             // 커맨드 등록 및 탭 완성

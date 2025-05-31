@@ -17,6 +17,7 @@ class HarumansunCommand(private val plugin: JavaPlugin) : CommandExecutor, TabCo
         if (args.isNotEmpty() && args[0].equals("reload", true)) {
             plugin.reloadConfig()
             sender.sendMessage("[Harumansun] 설정이 리로드되었습니다.")
+            plugin.saveConfig()
             return true
         }
         sender.sendMessage("[Harumansun] 사용법: /harumansun reload")
