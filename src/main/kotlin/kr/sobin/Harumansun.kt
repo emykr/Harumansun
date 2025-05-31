@@ -1,7 +1,6 @@
 package kr.sobin
 
 import kr.sobin.command.HarumansunCommand
-import kr.sobin.command.PlayerCommand
 import kr.sobin.event.listener.InterruptItemListener
 import kr.sobin.event.listener.InterrupterVillagerListener
 import kr.sobin.npc.PriceUpdater
@@ -14,6 +13,10 @@ class Harumansun : JavaPlugin() {
     private var initialized = false
     private lateinit var priceUpdater: PriceUpdater
     private val version = "1.0.0"
+
+    // messages.yml 핸들링용 필드 추가
+    lateinit var messages: YamlConfiguration
+        private set
 
     override fun onEnable() {
         if (initialized) {
@@ -75,6 +78,15 @@ class Harumansun : JavaPlugin() {
                 saveConfig()
                 logger.info("새로운 config.yml 생성 완료")
             }
+
+            // messages.yml 처리
+            val messagesFile = File(dataFolder, "messages.yml")
+            if (!messagesFile.exists()) {
+                saveResource("messages.yml", false)
+                logger.info("messages.yml이 존재하지 않아 기본 파일을 생성했습니다.")
+            }
+            messages = YamlConfiguration.loadConfiguration(messagesFile)
+
             priceUpdater = PriceUpdater(this)
 
             // 이벤트 리스너 등록
@@ -85,11 +97,6 @@ class Harumansun : JavaPlugin() {
             // 커맨드 등록 및 탭 완성
             getCommand("harumansun")?.apply {
                 val cmd = HarumansunCommand(this@Harumansun)
-                setExecutor(cmd)
-                tabCompleter = cmd
-            }
-            getCommand("player")?.apply {
-                val cmd = PlayerCommand(this@Harumansun)
                 setExecutor(cmd)
                 tabCompleter = cmd
             }

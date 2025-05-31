@@ -7,6 +7,4 @@ authors: [ Sobin ]
 commands:
   harumansun:
     description: Harumansun plugin command
-  player:
-    description: FakePlayer control command
 

@@ -7,3 +7,4 @@ shop_purchase_fail: "방해권을 구매하지 못했습니다. 잔액이 부족
 shop_no_economy: "[상점] 경제 플러그인(Vault)이 감지되지 않았습니다."
 pufferfish_shop_purchase_success: "[상점] {item}를/을 구매 했습니다! ({price})"
 pufferfish_shop_purchase_fail: "복어를 구매하지 못했습니다. 잔액이 부족합니다."
+effect_applied: "[알림] {target}에게 {effect} 효과를 걸었습니다!"

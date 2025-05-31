@@ -9,6 +9,8 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import kr.sobin.event.InterruptEventManager
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 
 class InterruptItemListener(private val plugin: JavaPlugin) : Listener {
     private val eventManager = InterruptEventManager(plugin)
@@ -34,15 +36,17 @@ class InterruptItemListener(private val plugin: JavaPlugin) : Listener {
         }
 
         plugin.logger.info("[DEBUG] 유효한 방해권 확인됨, 타겟 탐색 시작")
-        val target = findTargetPlayer(player, 5.0) ?: player
-        plugin.logger.info("[DEBUG] 타겟 플레이어: ${target.name}")
+        val target = findTargetPlayer(player, 5.0)
+        val finalTarget = if (target != null) target else player
+        plugin.logger.info("[DEBUG] 타겟 플레이어: ${finalTarget.name}")
 
         // 이벤트 매니저를 통해 랜덤 효과 적용
-        val result = eventManager.applyRandomEffect(target)
+        val result = eventManager.applyRandomEffect(finalTarget)
         plugin.logger.info("[DEBUG] 이벤트 적용 결과: $result")
 
         if (result != null) {
             consumeTicket(item, player)
+            sendEffectMessage(player, finalTarget, result)
             event.isCancelled = true
         }
     }
@@ -54,12 +58,15 @@ class InterruptItemListener(private val plugin: JavaPlugin) : Listener {
         return player.getNearbyEntities(range, range, range)
             .filterIsInstance<Player>()
             .filter { it != player }
-            .minByOrNull { entity: Player ->
+            .map { entity ->
                 val angle: Double = direction.angle(
                     entity.eyeLocation.toVector().subtract(eyeLocation.toVector())
-                ).toDouble() // angle이 float이면 double로 변환
-                if (angle <= Math.toRadians(30.0)) angle else Double.MAX_VALUE
+                ).toDouble()
+                Pair(entity, angle)
             }
+            .filter { it.second <= Math.toRadians(30.0) }
+            .minByOrNull { it.second }
+            ?.first
     }
 
     private fun isValidInterruptTicket(item: ItemStack): Boolean {
@@ -93,5 +100,19 @@ class InterruptItemListener(private val plugin: JavaPlugin) : Listener {
         } else {
             player.inventory.removeItem(item)
         }
+    }
+
+    private fun sendEffectMessage(player: Player, target: Player, effect: String) {
+        val messages = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(
+            java.io.File(plugin.dataFolder, "messages.yml")
+        )
+        val rawMsg = messages.getString("effect_applied")
+            ?: "[알림] {target}에게 {effect} 효과를 걸었습니다!"
+        val msg = rawMsg
+            .replace("{target}", target.name)
+            .replace("{effect}", effect)
+        player.sendMessage(
+            Component.text(msg).color(NamedTextColor.RED)
+        )
     }
 }
